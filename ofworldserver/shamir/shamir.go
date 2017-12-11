@@ -1,31 +1,20 @@
 package shamir
 
 import (
+	//"fmt"
+	"github.com/nw/ofworldserver/utils"
+	"math/big"
 	"math/rand"
 	"time"
-	"math/big"
-	"fmt"
-	"OfworldServer/utils"
 )
 
 var (
 	randSeed = rand.NewSource(time.Now().Unix())
-	ShamirServerIp= []string{
-		"http://13.58.18.141:8080",
-		"http://18.221.37.164:8080",
-		"http://18.221.56.4:8080",
-		"http://13.58.183.250:8080",
-		"http://18.220.116.44:8080",
-	}
 )
 
-
-
 type Secret struct {
-
 	Item   int64
 	Result *big.Int
-
 }
 
 func newSecret(item int64, result *big.Int) *Secret {
@@ -36,6 +25,7 @@ func newSecret(item int64, result *big.Int) *Secret {
 	}
 
 }
+
 //GenerateShamirMul 沙米尔分段加密， 传入的数据为分段的bytes 二维数组=》返回的形式也是二维的秘钥
 func GenerateShamirMul(keyNeed, keyNumber int, clearText [][]byte) ([][]Secret, error) {
 
@@ -52,11 +42,10 @@ func GenerateShamirMul(keyNeed, keyNumber int, clearText [][]byte) ([][]Secret, 
 			mulSecret[j] = innerArray
 		}
 	}
-      fmt.Println(mulSecret)
+	//fmt.Println(mulSecret)
 	return mulSecret, nil
 
 }
-
 
 //GenerateShamire 对外生成沙米尔group
 func GenerateShamire(keyNeed, keyNumber int, clearText []byte) ([]Secret, error) {
@@ -88,7 +77,7 @@ func generateSecret(poly map[int]int64, secretNumber int, clearText *big.Int) []
 
 	secretArray := make([]Secret, secretNumber)
 
-	randNumber :=utils.GenerateRandomNumber(1,100,secretNumber)
+	randNumber := utils.GenerateRandomNumber(1, 100, secretNumber)
 
 	for i := 0; i < secretNumber; i++ {
 		x := randNumber[i]
@@ -115,7 +104,7 @@ func calculateEachItem(x int64, item int64, pow int) *big.Int {
 }
 
 //recoverSecret 恢复门限
-func RecoverSecret(secretGroup []Secret) {
+func RecoverSecret(secretGroup []Secret) *big.Int {
 
 	finalResult := new(big.Float).SetFloat64(0.0).SetPrec(500)
 	for i := 0; i < len(secretGroup); i++ {
@@ -132,9 +121,29 @@ func RecoverSecret(secretGroup []Secret) {
 	}
 
 	finalInt := new(big.Int)
-	finalResult.Int(finalInt)
-	fmt.Println(finalResult.Int(finalInt))
 
+	finalResult.Int(finalInt)
+
+	return finalInt
+
+}
+
+func RecoverShamirSecretsMul(secrets [][]Secret) []*big.Int {
+
+	var result []*big.Int
+
+	for i := 0; i < len(secrets[0]); i++ {
+		var eachLayer []Secret
+		for j := 0; j < len(secrets); j++ {
+			single := secrets[j][i]
+			//fmt.Println("single: ", single)
+			eachLayer = append(eachLayer, single)
+		}
+		clearText := RecoverSecret(eachLayer)
+		result = append(result, clearText)
+	}
+
+	return result
 }
 
 //interpolationDiv y/(x-y)
@@ -144,4 +153,3 @@ func interpolationDiv(x, y int64) *big.Float {
 	return new(big.Float).Quo(new(big.Float).SetInt64(y).SetPrec(500), new(big.Float).SetInt(subStep).SetPrec(500))
 
 }
-

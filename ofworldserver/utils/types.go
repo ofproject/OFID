@@ -1,5 +1,6 @@
 package utils
 
+/*
 import "github.com/ethereum/go-ethereum/common"
 
 type Application struct {
@@ -23,4 +24,4 @@ type UserInfo struct {
 	Address string  `json:"address"`
 	Name    string  `json:"name"`
 
-}
+}*/
